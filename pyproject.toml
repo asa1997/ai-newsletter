@@ -8,10 +8,14 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "crewai (>=0.148.0,<0.149.0)"
 ]
 
 [tool.poetry]
 packages = [{include = "ai_newsletter", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10.0,<3.12"
 
 [tool.poetry.scripts]
 ai-newsletter = "ai_newsletter.main:main"
