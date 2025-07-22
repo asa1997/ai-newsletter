@@ -159,10 +159,13 @@ def main():
         planning=True
 
     )
-
-    result = crew.run()
-    print(result)
-
+    try:
+        result = crew.run()
+        print(result)
+    except Exception as e:
+        print("An error occurred while running the crew:")
+        print(e)
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
