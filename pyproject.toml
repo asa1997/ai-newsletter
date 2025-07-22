@@ -13,6 +13,8 @@ dependencies = [
 [tool.poetry]
 packages = [{include = "ai_newsletter", from = "src"}]
 
+[tool.poetry.scripts]
+ai-newsletter = "ai_newsletter.main:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
