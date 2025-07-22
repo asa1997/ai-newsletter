@@ -21,7 +21,7 @@ def main():
         role="AI/ML Research Specialist",
         goal="Find and gather the latest, most significant news and trends in AI and Machine Learning using web search",
         backstory="""You are a senior research analyst specializig in artificial intelligence and machine learning. You have a keen eye for identifying breakthrough technologies, emerging trends and significant industry developments. You excel at finding credible sources and distinguishing between hype and genuine innvoation. You use advanced web search tools to gather comprehensie information from multiple sources. """,
-        tools=[tavilySearch]
+        tools=[tavilySearch],
         llm=ollamaLLM,
         verbose=True,
         allow_delegation=False
@@ -163,6 +163,7 @@ def main():
         result = crew.run()
         print(result)
     except Exception as e:
+        import traceback
         print("An error occurred while running the crew:")
         print(e)
         traceback.print_exc()
