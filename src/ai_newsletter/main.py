@@ -12,7 +12,7 @@ def main():
     )
     
     ollamaLLM = LLM(
-        model="ollama/llama3.2:8b",
+        model="ollama/llama3.2:latest",
         base_url="http://localhost:11434",
         temperature=0.3
     )
@@ -152,7 +152,7 @@ def main():
         embedder={
             "provider": "ollama",
             "config": {
-                "model": "mxbai-embed-large",
+                "model": "mxbai-embed-large:latest",
                 "url": "http://localhost:11434/api/embeddings"
             }
         },
