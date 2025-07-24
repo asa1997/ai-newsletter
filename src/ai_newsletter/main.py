@@ -49,7 +49,7 @@ class TavilySearchTool(BaseTool):
                 return "No results found."
             # Return as JSON string for LLM parsing
             import json
-            return json.dumps(results[:5], ensure_ascii=False)
+            return json.dumps(results, ensure_ascii=False)
         except Exception as e:
             return f"Error during search: {str(e)}"
 
@@ -164,7 +164,12 @@ def main():
     )
     result = graph.invoke({"query": query})
     print("\n\n===== FINAL NEWSLETTER =====\n")
-    print(result["final_newsletter"])
+    # print(result["final_newsletter"])
+    newsletter = result["final_newsletter"]
+    if hasattr(newsletter, "content"):
+        print(newsletter.content)
+    else:
+        print(newsletter)
 
 if __name__ == "__main__":
     main()
