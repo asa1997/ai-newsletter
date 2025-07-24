@@ -60,7 +60,7 @@ class TavilySearchTool(BaseTool):
 
 llm = ChatOllama(
     base_url="http://localhost:11434",
-    model="llama3:8b",
+    model="llama3.2:latest",
     temperature=0.3,
 )
 
