@@ -13,7 +13,7 @@ class TavilySearchTool(BaseTool):
 
     def __init__(self, api_key, search_depth="advanced", max_result=10, include_answer=True, include_images=False, timeout=60):
         super().__init__()
-        self.client = TavilyClient(api_key=api_key)
+        self._client = TavilyClient(api_key=api_key)
         self.search_depth = search_depth
         self.max_result = max_result
         self.include_answer = include_answer
