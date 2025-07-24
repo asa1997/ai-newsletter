@@ -38,6 +38,7 @@ class TavilySearchTool(BaseTool):
             results = response.get("results", [])
             if not results:
                 return "No results found."
+            print("##########results\n", results)
             formatted = []
             for item in results[:5]:  # Limit to 5 results
                 title = item.get("title") or ""
