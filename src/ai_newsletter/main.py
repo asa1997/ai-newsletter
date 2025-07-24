@@ -3,11 +3,13 @@ import traceback
 from crewai import Agent, Task, Crew, LLM, Process
 from crewai.tools import BaseTool
 from tavily import TavilyClient
+from pydantic import PrivateAttr
 
 # --- Custom Tavily Search Tool using TavilyClient ---
 class TavilySearchTool(BaseTool):
     name: str = "Tavily Web Search"
     description: str = "Searches the web for the latest AI/ML news and trends using the Tavily API."
+    _client: any = PrivateAttr()
 
     def __init__(self, api_key, search_depth="advanced", max_result=10, include_answer=True, include_images=False, timeout=60):
         super().__init__()
