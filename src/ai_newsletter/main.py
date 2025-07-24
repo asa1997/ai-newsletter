@@ -3,19 +3,27 @@ from langchain.tools import BaseTool
 from tavily import TavilyClient
 from langchain_community.chat_models import ChatOllama
 from langgraph.graph import StateGraph, END
+from pydantic import PrivateAttr
 
+# --- Custom Tavily Search Tool using TavilyClient ---
 class TavilySearchTool(BaseTool):
-    name: str = "tavily_search"
+    name: str = "Tavily Web Search"
     description: str = "Searches the web for the latest AI/ML news and trends using the Tavily API."
+    _client: any = PrivateAttr()
+    _search_depth: any = PrivateAttr()
+    _max_result: any = PrivateAttr()
+    _include_answer: any = PrivateAttr()
+    _include_images: any = PrivateAttr()
+    _timeout: any = PrivateAttr()
 
-    def __init__(self, api_key, search_depth="advanced", max_result=5, include_answer=True, include_images=False, timeout=60):
+    def __init__(self, api_key, search_depth="advanced", max_result=10, include_answer=True, include_images=False, timeout=60):
         super().__init__()
-        self.client = TavilyClient(api_key=api_key)
-        self.search_depth = search_depth
-        self.max_result = max_result
-        self.include_answer = include_answer
-        self.include_images = include_images
-        self.timeout = timeout
+        self._client = TavilyClient(api_key=api_key)
+        self._search_depth = search_depth
+        self._max_result = max_result
+        self._include_answer = include_answer
+        self._include_images = include_images
+        self._timeout = timeout
 
     def _run(self, query: str):
         response = self.client.search(
