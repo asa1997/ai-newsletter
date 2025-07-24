@@ -27,13 +27,13 @@ class TavilySearchTool(BaseTool):
 
     def _run(self, query: str) -> str:
         try:
-            results = self.client.search(
+            results = self._client.search(
                 query=query,
-                search_depth=self.search_depth,
-                num_results=self.max_result,
-                include_answer=self.include_answer,
-                include_images=self.include_images,
-                timeout=self.timeout
+                search_depth=self._search_depth,
+                num_results=self._max_result,
+                include_answer=self._include_answer,
+                include_images=self._include_images,
+                timeout=self._timeout
             )
             # Format results for LLM consumption
             formatted = []
@@ -45,7 +45,6 @@ class TavilySearchTool(BaseTool):
             return "\n".join(formatted) if formatted else "No results found."
         except Exception as e:
             return f"Tavily search failed: {str(e)}"
-
 # --- Main CrewAI Workflow ---
 def main():
     TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "YOUR_TAVILY_API_KEY")
