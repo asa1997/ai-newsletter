@@ -40,12 +40,13 @@ class TavilySearchTool(BaseTool):
             if not results or not isinstance(results, list):
                 return "No results found."
             formatted = []
-            for item in results[:5]:  # Limit to 5 results for LLM context safety
-                title = item.get("title") or ""
-                url = item.get("url") or ""
-                content = (item.get("content") or "")[:500]  # Truncate content for brevity
-                formatted.append(f"- {title}\n  {url}\n  {content}")
-            return "\n".join(formatted)
+            if results and len(results) > 0:
+                for item in results[:5]:  # Limit to 5 results for LLM context safety
+                    title = item.get("title") or ""
+                    url = item.get("url") or ""
+                    content = (item.get("content") or "")[:500]  # Truncate content for brevity
+                    formatted.append(f"- {title}\n  {url}\n  {content}")
+                return "\n".join(formatted)
         except Exception as e:
             return f"Tavily search failed: {str(e)}"
 # --- Main CrewAI Workflow ---
