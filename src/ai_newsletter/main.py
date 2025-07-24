@@ -2,10 +2,15 @@ import os
 import requests
 import traceback
 from crewai import Agent, Task, Crew, LLM, Process
+from crewai_tools.tools.base import BaseTool
 
 # --- Custom Tavily Search Tool ---
-class TavilySearchTool:
+class TavilySearchTool(BaseTool):
+    name = "Tavily Web Search"
+    description = "Searches the web for the latest AI/ML news and trends using Tavily API."
+
     def __init__(self, api_key, search_depth="advanced", max_result=10, include_answer=True, include_images=False, timeout=60):
+        super().__init__()
         self.api_key = api_key
         self.search_depth = search_depth
         self.max_result = max_result
@@ -13,7 +18,8 @@ class TavilySearchTool:
         self.include_images = include_images
         self.timeout = timeout
 
-    def search(self, query):
+    def run(self, query: str) -> str:
+        import requests
         url = "https://api.tavily.com/search"
         headers = {"Authorization": f"Bearer {self.api_key}"}
         payload = {
@@ -27,16 +33,12 @@ class TavilySearchTool:
             response = requests.post(url, headers=headers, json=payload, timeout=self.timeout)
             response.raise_for_status()
             data = response.json()
-            # Return a formatted string or structure as needed by your LLM prompt
             results = []
             for item in data.get("results", []):
                 results.append(f"- {item.get('title')}\n  {item.get('url')}\n  {item.get('content', '')}")
             return "\n".join(results) if results else "No results found."
         except Exception as e:
             return f"Tavily search failed: {str(e)}"
-
-    def __call__(self, query):
-        return self.search(query)
 
 # --- Main CrewAI Workflow ---
 def main():
