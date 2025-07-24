@@ -2,7 +2,7 @@ import os
 import requests
 import traceback
 from crewai import Agent, Task, Crew, LLM, Process
-from crewai_tools.tools.base import BaseTool
+from crewai.tools import BaseTool
 
 # --- Custom Tavily Search Tool ---
 class TavilySearchTool(BaseTool):
@@ -18,7 +18,7 @@ class TavilySearchTool(BaseTool):
         self.include_images = include_images
         self.timeout = timeout
 
-    def run(self, query: str) -> str:
+    def _run(self, query: str) -> str:
         import requests
         url = "https://api.tavily.com/search"
         headers = {"Authorization": f"Bearer {self.api_key}"}
