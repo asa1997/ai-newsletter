@@ -5,6 +5,15 @@ from langchain_community.chat_models import ChatOllama
 from langgraph.graph import StateGraph, END
 from pydantic import PrivateAttr
 
+from typing import TypedDict, Optional
+
+class NewsletterState(TypedDict):
+    query: str
+    research_summary: Optional[str]
+    analysis: Optional[str]
+    newsletter: Optional[str]
+    final_newsletter: Optional[str]
+
 # --- Custom Tavily Search Tool using TavilyClient ---
 class TavilySearchTool(BaseTool):
     name: str = "Tavily Web Search"
@@ -94,7 +103,7 @@ def editor_agent(input_dict):
 
 # Define the state keys for each step
 def build_graph(tavily_tool):
-    workflow = StateGraph()
+    workflow = StateGraph(NewsletterState)
     # Step 1: Research
     workflow.add_node(
         "research",
