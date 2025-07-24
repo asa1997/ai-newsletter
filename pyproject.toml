@@ -8,9 +8,11 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "crewai (>=0.148.0,<0.149.0)",
+    "crewai[tools] (>=0.148.0,<0.149.0)",
     "crewai-tools (>=0.55.0,<0.56.0)",
-    "tavily-python (>=0.7.10,<0.8.0)"
+    "tavily-python (>=0.7.10,<0.8.0)",
+    "langchain (>=0.3.26,<0.4.0)",
+    "langgraph (>=0.5.4,<0.6.0)"
 ]
 
 [tool.poetry]
