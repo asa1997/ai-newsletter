@@ -1,5 +1,6 @@
 import os
 import traceback
+import json
 from crewai import Agent, Task, Crew, LLM, Process
 from crewai.tools import BaseTool
 from tavily import TavilyClient
@@ -25,6 +26,7 @@ class TavilySearchTool(BaseTool):
         self._include_images = include_images
         self._timeout = timeout
 
+
     def _run(self, query: str) -> str:
         try:
             response = self._client.search(
@@ -35,18 +37,11 @@ class TavilySearchTool(BaseTool):
                 include_images=self._include_images,
                 timeout=self._timeout
             )
-            # If response is a dict with "results", use it; otherwise, use response directly
-            results = response.get("results", response) if isinstance(response, dict) else response
+            results = response.get("results", [])
             if not results or not isinstance(results, list):
                 return "No results found."
-            formatted = []
-            if results and len(results) > 0:
-                for item in results[:5]:  # Limit to 5 results for LLM context safety
-                    title = item.get("title") or ""
-                    url = item.get("url") or ""
-                    content = (item.get("content") or "")[:500]  # Truncate content for brevity
-                    formatted.append(f"- {title}\n  {url}\n  {content}")
-                return "\n".join(formatted)
+            print("DEBUG: Tavily tool output:", results[:5])
+            return json.dumps(results[:5], ensure_ascii=False)
         except Exception as e:
             return f"Tavily search failed: {str(e)}"
 # --- Main CrewAI Workflow ---
@@ -107,6 +102,7 @@ def main():
 
     researchTask = Task(
         description="""Conduct comprehensive research on latest AI and ML news and trends using web search.
+        You will receive a JSON list of news items. For each, extract the title, url, and summary. If the list is empty, say 'No news found.'
         Focus on:
         1. Recent breakthrough technologies and research papers (last 7-14 days)
         2. Major industry announcements and product launches
