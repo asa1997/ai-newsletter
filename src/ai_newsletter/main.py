@@ -6,8 +6,8 @@ from crewai.tools import BaseTool
 
 # --- Custom Tavily Search Tool ---
 class TavilySearchTool(BaseTool):
-    name = "Tavily Web Search"
-    description = "Searches the web for the latest AI/ML news and trends using Tavily API."
+    name: str = "Tavily Web Search"
+    description: str = "Searches the web for the latest AI/ML news and trends using Tavily API."
 
     def __init__(self, api_key, search_depth="advanced", max_result=10, include_answer=True, include_images=False, timeout=60):
         super().__init__()
