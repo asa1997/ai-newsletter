@@ -210,7 +210,7 @@ def main():
         planning=True
     )
     try:
-        result = crew.run()
+        result = crew.kickoff()
         print(result)
     except Exception as e:
         print("An error occurred while running the crew:")
