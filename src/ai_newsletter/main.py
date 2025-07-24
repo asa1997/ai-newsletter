@@ -102,7 +102,7 @@ def main():
 
     researchTask = Task(
         description="""Conduct comprehensive research on latest AI and ML news and trends using web search.
-        You will receive a JSON list of news items. For each, extract the title, url, and summary. If the list is empty, say 'No news found.'
+        You will receive a JSON list of news items. For each, extract the title, url, and content. If the list is empty, say 'No news found.'
         Focus on:
         1. Recent breakthrough technologies and research papers (last 7-14 days)
         2. Major industry announcements and product launches
