@@ -42,7 +42,7 @@ class TavilySearchTool(BaseTool):
             for item in results[:5]:  # Limit to 5 results
                 title = item.get("title") or ""
                 url = item.get("url") or ""
-                content = (item.get("content") or "")[:800]  # Limit content length
+                content = (item.get("content") or "")[:500]  # Limit content length
                 formatted.append(f"- {title}\n  {url}\n  {content}")
             return "\n".join(formatted)
         except Exception as e:
@@ -54,7 +54,7 @@ def main():
     tavilySearch = TavilySearchTool(
         api_key=TAVILY_API_KEY,
         search_depth="advanced",
-        max_result=10,
+        max_result=5,
         include_answer=True,
         include_images=False,
         timeout=60
