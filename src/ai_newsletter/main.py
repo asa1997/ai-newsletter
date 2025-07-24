@@ -207,7 +207,7 @@ def main():
                 "url": "http://localhost:11434/api/embeddings"
             }
         },
-        planning=True
+        planning=False
     )
     try:
         result = crew.kickoff()
