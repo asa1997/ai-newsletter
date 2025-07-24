@@ -1,17 +1,17 @@
 import os
-import requests
 import traceback
 from crewai import Agent, Task, Crew, LLM, Process
 from crewai.tools import BaseTool
+from tavily import TavilyClient
 
-# --- Custom Tavily Search Tool ---
+# --- Custom Tavily Search Tool using TavilyClient ---
 class TavilySearchTool(BaseTool):
     name: str = "Tavily Web Search"
-    description: str = "Searches the web for the latest AI/ML news and trends using Tavily API."
+    description: str = "Searches the web for the latest AI/ML news and trends using the Tavily API."
 
     def __init__(self, api_key, search_depth="advanced", max_result=10, include_answer=True, include_images=False, timeout=60):
         super().__init__()
-        self.api_key = api_key
+        self.client = TavilyClient(api_key=api_key)
         self.search_depth = search_depth
         self.max_result = max_result
         self.include_answer = include_answer
@@ -19,31 +19,29 @@ class TavilySearchTool(BaseTool):
         self.timeout = timeout
 
     def _run(self, query: str) -> str:
-        import requests
-        url = "https://api.tavily.com/search"
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        payload = {
-            "query": query,
-            "search_depth": self.search_depth,
-            "max_results": self.max_result,
-            "include_answer": self.include_answer,
-            "include_images": self.include_images,
-        }
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=self.timeout)
-            response.raise_for_status()
-            data = response.json()
-            results = []
-            for item in data.get("results", []):
-                results.append(f"- {item.get('title')}\n  {item.get('url')}\n  {item.get('content', '')}")
-            return "\n".join(results) if results else "No results found."
+            results = self.client.search(
+                query=query,
+                search_depth=self.search_depth,
+                num_results=self.max_result,
+                include_answer=self.include_answer,
+                include_images=self.include_images,
+                timeout=self.timeout
+            )
+            # Format results for LLM consumption
+            formatted = []
+            for item in results:
+                title = item.get("title") or ""
+                url = item.get("url") or ""
+                content = item.get("content") or ""
+                formatted.append(f"- {title}\n  {url}\n  {content}")
+            return "\n".join(formatted) if formatted else "No results found."
         except Exception as e:
             return f"Tavily search failed: {str(e)}"
 
 # --- Main CrewAI Workflow ---
 def main():
-    # Set your Tavily API key here or via environment variable
-    TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
+    TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "YOUR_TAVILY_API_KEY")
 
     tavilySearch = TavilySearchTool(
         api_key=TAVILY_API_KEY,
