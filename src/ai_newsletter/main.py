@@ -35,15 +35,16 @@ class TavilySearchTool(BaseTool):
                 include_images=self._include_images,
                 timeout=self._timeout
             )
-            # response is a dict with a 'results' key
             results = response.get("results", [])
+            if not results:
+                return "No results found."
             formatted = []
-            for item in results:
+            for item in results[:5]:  # Limit to 5 results
                 title = item.get("title") or ""
                 url = item.get("url") or ""
-                content = item.get("content") or ""
+                content = (item.get("content") or "")[:800]  # Limit content length
                 formatted.append(f"- {title}\n  {url}\n  {content}")
-            return "\n".join(formatted) if formatted else "No results found."
+            return "\n".join(formatted)
         except Exception as e:
             return f"Tavily search failed: {str(e)}"
 # --- Main CrewAI Workflow ---
