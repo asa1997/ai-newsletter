@@ -35,20 +35,27 @@ class TavilySearchTool(BaseTool):
         self._timeout = timeout
 
     def _run(self, query: str):
-        response = self.client.search(
-            query=query,
-            search_depth=self.search_depth,
-            num_results=self.max_result,
-            include_answer=self.include_answer,
-            include_images=self.include_images,
-            timeout=self.timeout
-        )
-        results = response.get("results", [])
-        if not results:
-            return "No results found."
-        # Return as JSON string for LLM parsing
-        import json
-        return json.dumps(results[:5], ensure_ascii=False)
+        try:
+            response = self._client.search(
+                query=query,
+                search_depth=self._search_depth,
+                num_results=self._max_result,
+                include_answer=self._include_answer,
+                include_images=self._include_images,
+                timeout=self._timeout
+            )
+            results = response.get("results", [])
+            if not results:
+                return "No results found."
+            # Return as JSON string for LLM parsing
+            import json
+            return json.dumps(results[:5], ensure_ascii=False)
+        except Exception as e:
+            return f"Error during search: {str(e)}"
+
+    def _call(self, query: str):
+        # This method is required by BaseTool to run synchronously
+        return self._run(query)
 
 
 llm = ChatOllama(
