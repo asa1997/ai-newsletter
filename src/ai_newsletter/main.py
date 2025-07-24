@@ -5,8 +5,8 @@ from langchain_community.chat_models import ChatOllama
 from langgraph.graph import StateGraph, END
 
 class TavilySearchTool(BaseTool):
-    name = "tavily_search"
-    description = "Searches the web for the latest AI/ML news and trends using the Tavily API."
+    name: str = "tavily_search"
+    description: str = "Searches the web for the latest AI/ML news and trends using the Tavily API."
 
     def __init__(self, api_key, search_depth="advanced", max_result=5, include_answer=True, include_images=False, timeout=60):
         super().__init__()
