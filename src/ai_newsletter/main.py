@@ -27,7 +27,7 @@ class TavilySearchTool(BaseTool):
 
     def _run(self, query: str) -> str:
         try:
-            results = self._client.search(
+            response = self._client.search(
                 query=query,
                 search_depth=self._search_depth,
                 num_results=self._max_result,
@@ -35,7 +35,8 @@ class TavilySearchTool(BaseTool):
                 include_images=self._include_images,
                 timeout=self._timeout
             )
-            # Format results for LLM consumption
+            # response is a dict with a 'results' key
+            results = response.get("results", [])
             formatted = []
             for item in results:
                 title = item.get("title") or ""
