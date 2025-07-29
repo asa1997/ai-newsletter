@@ -1,11 +1,15 @@
 import json
+import os
+import argparse
+import logging
+from typing import TypedDict, Optional, Dict, Any
+
 from langchain.tools import BaseTool
 from tavily import TavilyClient
 from langchain_community.chat_models import ChatOllama
 from langgraph.graph import StateGraph, END
 from pydantic import PrivateAttr
 
-from typing import TypedDict, Optional
 
 class NewsletterState(TypedDict):
     query: str
@@ -14,18 +18,27 @@ class NewsletterState(TypedDict):
     newsletter: Optional[str]
     final_newsletter: Optional[str]
 
+
 # --- Custom Tavily Search Tool using TavilyClient ---
 class TavilySearchTool(BaseTool):
     name: str = "Tavily Web Search"
     description: str = "Searches the web for the latest AI/ML news and trends using the Tavily API."
-    _client: any = PrivateAttr()
-    _search_depth: any = PrivateAttr()
-    _max_result: any = PrivateAttr()
-    _include_answer: any = PrivateAttr()
-    _include_images: any = PrivateAttr()
-    _timeout: any = PrivateAttr()
+    _client: Any = PrivateAttr()
+    _search_depth: str = PrivateAttr()
+    _max_result: int = PrivateAttr()
+    _include_answer: bool = PrivateAttr()
+    _include_images: bool = PrivateAttr()
+    _timeout: int = PrivateAttr()
 
-    def __init__(self, api_key, search_depth="advanced", max_result=10, include_answer=True, include_images=False, timeout=60):
+    def __init__(
+        self,
+        api_key: str,
+        search_depth: str = "advanced",
+        max_result: int = 10,
+        include_answer: bool = True,
+        include_images: bool = False,
+        timeout: int = 60,
+    ):
         super().__init__()
         self._client = TavilyClient(api_key=api_key)
         self._search_depth = search_depth
@@ -34,7 +47,7 @@ class TavilySearchTool(BaseTool):
         self._include_images = include_images
         self._timeout = timeout
 
-    def _run(self, query: str):
+    def _run(self, query: str) -> str:
         try:
             response = self._client.search(
                 query=query,
@@ -42,19 +55,17 @@ class TavilySearchTool(BaseTool):
                 num_results=self._max_result,
                 include_answer=self._include_answer,
                 include_images=self._include_images,
-                timeout=self._timeout
+                timeout=self._timeout,
             )
             results = response.get("results", [])
             if not results:
                 return "No results found."
-            # Return as JSON string for LLM parsing
-            import json
             return json.dumps(results, ensure_ascii=False)
         except Exception as e:
+            logging.error(f"Error during Tavily search: {e}")
             return f"Error during search: {str(e)}"
 
-    def _call(self, query: str):
-        # This method is required by BaseTool to run synchronously
+    def _call(self, query: str) -> str:
         return self._run(query)
 
 
@@ -65,111 +76,246 @@ llm = ChatOllama(
 )
 
 
-def research_agent(input_dict):
-    # input_dict: {"query": ..., "tavily_tool": TavilySearchTool}
+# Prompt templates as constants for easier maintenance
+RESEARCH_PROMPT = (
+    "You will receive a JSON list of news items. For each, extract the title, url, and summary. "
+    "If the list is empty, say 'No news found.'\n"
+    "JSON: {tool_output}\n"
+    "Summarize the 5 most important items in markdown bullet points."
+)
+
+ANALYSIS_PROMPT = (
+    "Analyze the following AI/ML news research summary. Identify the most significant developments and trends, "
+    "explain their implications for different industries, and provide a concise executive summary:\n"
+    "{research_summary}"
+)
+
+NEWSLETTER_PROMPT = (
+    "Write a professional, engaging AI/ML newsletter based on the following analysis. "
+    "Include a catchy intro, organize the main stories with summaries and links, highlight trends, and end with a closing remark. "
+    "Format in markdown for readability:\n"
+    "{analysis}"
+)
+
+EDITOR_PROMPT = (
+    "Edit the following AI/ML newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
+    "Ensure it is ready for publication:\n"
+    "{newsletter}"
+)
+
+
+def research_agent(input_dict: Dict[str, Any]) -> str:
+    """
+    Perform research by running a web search and summarizing results.
+
+    Args:
+        input_dict: Dictionary with keys 'query' (str) and 'tavily_tool' (TavilySearchTool).
+
+    Returns:
+        A markdown summary of the top news items.
+    """
     query = input_dict["query"]
     tavily_tool = input_dict["tavily_tool"]
     tool_output = tavily_tool.run(query)
-    # LLM prompt
-    prompt = (
-        "You will receive a JSON list of news items. For each, extract the title, url, and summary. "
-        "If the list is empty, say 'No news found.'\n"
-        f"JSON: {tool_output}\n"
-        "Summarize the 5 most important items in markdown bullet points."
-    )
+    prompt = RESEARCH_PROMPT.format(tool_output=tool_output)
     return llm.invoke(prompt)
 
-def analysis_agent(input_dict):
+
+def analysis_agent(input_dict: Dict[str, Any]) -> str:
+    """
+    Analyze the research summary to identify key trends and implications.
+
+    Args:
+        input_dict: Dictionary with key 'research_summary' (str).
+
+    Returns:
+        An executive summary of the analysis.
+    """
     research_summary = input_dict["research_summary"]
-    prompt = (
-        "Analyze the following AI/ML news research summary. Identify the most significant developments and trends, "
-        "explain their implications for different industries, and provide a concise executive summary:\n"
-        f"{research_summary}"
-    )
+    prompt = ANALYSIS_PROMPT.format(research_summary=research_summary)
     return llm.invoke(prompt)
 
-def newsletter_writer_agent(input_dict):
+
+def newsletter_writer_agent(input_dict: Dict[str, Any]) -> str:
+    """
+    Write a newsletter based on the analysis.
+
+    Args:
+        input_dict: Dictionary with key 'analysis' (str).
+
+    Returns:
+        A markdown formatted newsletter.
+    """
     analysis = input_dict["analysis"]
-    prompt = (
-        "Write a professional, engaging AI/ML newsletter based on the following analysis. "
-        "Include a catchy intro, organize the main stories with summaries and links, highlight trends, and end with a closing remark. "
-        "Format in markdown for readability:\n"
-        f"{analysis}"
-    )
+    prompt = NEWSLETTER_PROMPT.format(analysis=analysis)
     return llm.invoke(prompt)
 
-def editor_agent(input_dict):
+
+def editor_agent(input_dict: Dict[str, Any]) -> str:
+    """
+    Edit the newsletter draft for clarity and professionalism.
+
+    Args:
+        input_dict: Dictionary with key 'newsletter' (str).
+
+    Returns:
+        The final edited newsletter.
+    """
     newsletter = input_dict["newsletter"]
-    prompt = (
-        "Edit the following AI/ML newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
-        "Ensure it is ready for publication:\n"
-        f"{newsletter}"
-    )
+    prompt = EDITOR_PROMPT.format(newsletter=newsletter)
     return llm.invoke(prompt)
 
 
-# Define the state keys for each step
-def build_graph(tavily_tool):
+def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
+    """
+    Build the newsletter generation workflow graph.
+
+    Args:
+        tavily_tool: An instance of TavilySearchTool.
+
+    Returns:
+        A compiled StateGraph representing the workflow.
+    """
     workflow = StateGraph(NewsletterState)
-    # Step 1: Research
+
     workflow.add_node(
         "research",
         lambda state: {
-            "research_summary": research_agent({"query": state["query"], "tavily_tool": tavily_tool})
-        }
+            "research_summary": research_agent(
+                {"query": state["query"], "tavily_tool": tavily_tool}
+            )
+        },
     )
-    # Step 2: Analysis
     workflow.add_node(
         "analysis",
         lambda state: {
             "analysis": analysis_agent({"research_summary": state["research_summary"]})
-        }
+        },
     )
-    # Step 3: Newsletter Writing
     workflow.add_node(
         "newsletter",
         lambda state: {
             "newsletter": newsletter_writer_agent({"analysis": state["analysis"]})
-        }
+        },
     )
-    # Step 4: Editing
     workflow.add_node(
         "edit",
-        lambda state: {
-            "final_newsletter": editor_agent({"newsletter": state["newsletter"]})
-        }
+        lambda state: {"final_newsletter": editor_agent({"newsletter": state["newsletter"]})},
     )
 
-    # Edges: research -> analysis -> newsletter -> edit -> END
     workflow.add_edge("research", "analysis")
     workflow.add_edge("analysis", "newsletter")
     workflow.add_edge("newsletter", "edit")
     workflow.add_edge("edit", END)
 
-    # Set entry point
     workflow.set_entry_point("research")
     return workflow.compile()
 
-def main():
-    import os
-    TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
-    tavily_tool = TavilySearchTool(api_key=TAVILY_API_KEY)
 
-    graph = build_graph(tavily_tool)
-    # Start the workflow with a query
-    query = (
-        "latest AI and machine learning news 2025, machine learning breakthroughs, AI funding news, "
-        "AI regulation updates, new AI models released, AI industry trends, OpenAI news, Google AI updates, "
-        "Microsoft AI updates, NVIDIA AI updates"
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command line arguments.
+
+    Returns:
+        Parsed arguments namespace.
+    """
+    parser = argparse.ArgumentParser(description="AI Newsletter Generator")
+    parser.add_argument(
+        "--query",
+        type=str,
+        default=None,
+        help="Custom query string for the newsletter research step.",
     )
-    result = graph.invoke({"query": query})
-    print("\n\n===== FINAL NEWSLETTER =====\n")
-    # print(result["final_newsletter"])
-    newsletter = result["final_newsletter"]
-    if hasattr(newsletter, "content"):
-        print(newsletter.content)
-    else:
-        print(newsletter)
+    parser.add_argument(
+        "--search-depth",
+        type=str,
+        default=os.getenv("TAVILY_SEARCH_DEPTH", "advanced"),
+        help="Search depth for TavilySearchTool (default: advanced).",
+    )
+    parser.add_argument(
+        "--max-results",
+        type=int,
+        default=int(os.getenv("TAVILY_MAX_RESULTS", "10")),
+        help="Maximum number of search results (default: 10).",
+    )
+    parser.add_argument(
+        "--include-answer",
+        action="store_true",
+        help="Include answers in search results (default: True).",
+    )
+    parser.add_argument(
+        "--include-images",
+        action="store_true",
+        help="Include images in search results (default: False).",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=int(os.getenv("TAVILY_TIMEOUT", "60")),
+        help="Timeout for search requests in seconds (default: 60).",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging.",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    """
+    Main entry point for the AI newsletter generator.
+    """
+    args = parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+
+    TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
+    if not TAVILY_API_KEY:
+        logging.error("TAVILY_API_KEY environment variable is not set.")
+        return
+
+    tavily_tool = TavilySearchTool(
+        api_key=TAVILY_API_KEY,
+        search_depth=args.search_depth,
+        max_result=args.max_results,
+        include_answer=args.include_answer,
+        include_images=args.include_images,
+        timeout=args.timeout,
+    )
+
+    # Default query including specified sources, updated to fetch news of the current week
+    default_query = (
+        "latest AI and machine learning news from the current week, machine learning breakthroughs, AI funding news, "
+        "AI regulation updates, new AI models released, AI industry trends, OpenAI news, Google AI updates, "
+        "Microsoft AI updates, NVIDIA AI updates, "
+        "sources: NIST, OWASP, MITRE ATLAS, ATT&CK, MLCommons, Google Security Blog, Microsoft, Cloudflare, IBM Research, "
+        "OpenAI, Anthropic, Meta AI, arXiv cs.CR, cs.AI, stat.ML, NIST PQC reports, AI Snake Oil, Alignment Newsletter, "
+        "Security & Safety Substacks, Ben Dickson, HuggingFace SafetAI, Hacker News, Reddit /r/MachineLearning security filter, "
+        "curated Twitter threads"
+    )
+
+    query = args.query if args.query else default_query
+
+    logging.info("Starting AI newsletter generation workflow.")
+    logging.info(f"Using query: {query}")
+
+    try:
+        graph = build_graph(tavily_tool)
+        result = graph.invoke({"query": query})
+        newsletter = result.get("final_newsletter", "")
+
+        logging.info("\n\n===== FINAL NEWSLETTER =====\n")
+        if hasattr(newsletter, "content"):
+            print(newsletter.content)
+        else:
+            print(newsletter)
+    except Exception as e:
+        logging.error(f"Error during newsletter generation: {e}")
+
 
 if __name__ == "__main__":
     main()
