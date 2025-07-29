@@ -289,13 +289,8 @@ def main() -> None:
 
     # Default query including specified sources, updated to fetch news of the current week
     default_query = (
-        "latest AI and machine learning news from the current week, machine learning breakthroughs, AI funding news, "
-        "AI regulation updates, new AI models released, AI industry trends, OpenAI news, Google AI updates, "
-        "Microsoft AI updates, NVIDIA AI updates, "
-        "sources: NIST, OWASP, MITRE ATLAS, ATT&CK, MLCommons, Google Security Blog, Microsoft, Cloudflare, IBM Research, "
-        "OpenAI, Anthropic, Meta AI, arXiv cs.CR, cs.AI, stat.ML, NIST PQC reports, AI Snake Oil, Alignment Newsletter, "
-        "Security & Safety Substacks, Ben Dickson, HuggingFace SafetAI, Hacker News, Reddit /r/MachineLearning security filter, "
-        "curated Twitter threads"
+    "Latest AI and machine learning news this week: breakthroughs, funding, regulation, new models, industry trends. "
+    "Focus on OpenAI, Google, Microsoft, NVIDIA, Anthropic, Meta, arXiv, NIST, MLCommons, Alignment Newsletter, Hacker News."
     )
 
     query = args.query if args.query else default_query
