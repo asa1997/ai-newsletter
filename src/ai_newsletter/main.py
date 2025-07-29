@@ -208,7 +208,7 @@ def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
     workflow.add_edge("newsletter_agent", "editor_agent")
     workflow.add_edge("editor_agent", END)
 
-    workflow.set_entry_point("research")
+    workflow.set_entry_point("research_agent")
     return workflow.compile()
 
 
