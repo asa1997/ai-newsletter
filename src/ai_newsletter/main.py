@@ -187,7 +187,7 @@ def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
         },
     )
     workflow.add_node(
-        "analysis",
+        "analyze",
         lambda state: {
             "analysis": analysis_agent({"research_summary": state["research_summary"]})
         },
