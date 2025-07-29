@@ -9,6 +9,8 @@ from tavily import TavilyClient
 from langchain_community.chat_models import ChatOllama
 from langgraph.graph import StateGraph, END
 from pydantic import PrivateAttr
+import smtplib
+from email.message import EmailMessage
 
 
 class NewsletterState(TypedDict):
@@ -17,6 +19,7 @@ class NewsletterState(TypedDict):
     analysis: Optional[str]
     newsletter: Optional[str]
     final_newsletter: Optional[str]
+    email_status: Optional[str]
 
 
 # --- Custom Tavily Search Tool using TavilyClient ---
@@ -166,6 +169,49 @@ def editor_agent(input_dict: Dict[str, Any]) -> str:
     return llm.invoke(prompt)
 
 
+def email_sender_agent(input_dict: Dict[str, Any]) -> str:
+    """
+    Send the final newsletter as an email.
+
+    Args:
+        input_dict: Dictionary with key 'final_newsletter' (str).
+
+    Returns:
+        Status message indicating success or failure.
+    """
+    newsletter_content = input_dict.get("final_newsletter", "")
+    smtp_server = os.environ.get("SMTP_SERVER")
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_username = os.environ.get("SMTP_USERNAME")
+    smtp_password = os.environ.get("SMTP_PASSWORD")
+    email_sender = os.environ.get("EMAIL_SENDER")
+    email_recipient = os.environ.get("EMAIL_RECIPIENT")
+
+    if not all([smtp_server, smtp_port, smtp_username, smtp_password, email_sender, email_recipient]):
+        error_msg = "SMTP configuration is incomplete. Please set SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, EMAIL_SENDER, and EMAIL_RECIPIENT environment variables."
+        logging.error(error_msg)
+        return error_msg
+
+    msg = EmailMessage()
+    msg["Subject"] = "Weekly AI/ML Newsletter"
+    msg["From"] = email_sender
+    msg["To"] = email_recipient
+    msg.set_content(newsletter_content)
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+        success_msg = f"Email sent successfully to {email_recipient}."
+        logging.info(success_msg)
+        return success_msg
+    except Exception as e:
+        error_msg = f"Failed to send email: {e}"
+        logging.error(error_msg)
+        return error_msg
+
+
 def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
     """
     Build the newsletter generation workflow graph.
@@ -202,10 +248,15 @@ def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
         "editor_agent",
         lambda state: {"final_newsletter": editor_agent({"newsletter": state["newsletter"]})},
     )
+    workflow.add_node(
+        "send_email",
+        lambda state: {"email_status": email_sender_agent({"final_newsletter": state["final_newsletter"]})},
+    )
 
     workflow.add_edge("research_agent", "analysis_agent")
     workflow.add_edge("analysis_agent", "newsletter_agent")
     workflow.add_edge("newsletter_agent", "editor_agent")
+    # workflow.add_edge("editor_agent", "send_email")
     workflow.add_edge("editor_agent", END)
 
     workflow.set_entry_point("research_agent")
