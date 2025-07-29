@@ -179,7 +179,7 @@ def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
     workflow = StateGraph(NewsletterState)
 
     workflow.add_node(
-        "research",
+        "research_agent",
         lambda state: {
             "research_summary": research_agent(
                 {"query": state["query"], "tavily_tool": tavily_tool}
@@ -187,26 +187,26 @@ def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
         },
     )
     workflow.add_node(
-        "analyze",
+        "analysis_agent",
         lambda state: {
             "analysis": analysis_agent({"research_summary": state["research_summary"]})
         },
     )
     workflow.add_node(
-        "newsletter",
+        "newsletter_agent",
         lambda state: {
             "newsletter": newsletter_writer_agent({"analysis": state["analysis"]})
         },
     )
     workflow.add_node(
-        "edit",
+        "editor_agent",
         lambda state: {"final_newsletter": editor_agent({"newsletter": state["newsletter"]})},
     )
 
-    workflow.add_edge("research", "analysis")
-    workflow.add_edge("analysis", "newsletter")
-    workflow.add_edge("newsletter", "edit")
-    workflow.add_edge("edit", END)
+    workflow.add_edge("research_agent", "analysis_agent")
+    workflow.add_edge("analysis_agent", "newsletter_agent")
+    workflow.add_edge("newsletter_agent", "editor_agent")
+    workflow.add_edge("editor_agent", END)
 
     workflow.set_entry_point("research")
     return workflow.compile()
