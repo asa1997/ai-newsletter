@@ -458,5 +458,98 @@ def main() -> None:
 #         logging.error(f"Error during newsletter generation: {e}")
 
 
+def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced", max_results: int = 10, include_answer: bool = True, include_images: bool = False, timeout: int = 60) -> str:
+    """
+    Function to be called externally (e.g., by promptfoo) to invoke the newsletter generation workflow.
+
+    Args:
+        query: Optional custom query string for the newsletter research step.
+        topic: Topic to query for: "AI" or "PQC" (Post-Quantum Cryptography).
+        search_depth: Search depth for TavilySearchTool.
+        max_results: Maximum number of search results.
+        include_answer: Whether to include answers in search results.
+        include_images: Whether to include images in search results.
+        timeout: Timeout for search requests in seconds.
+
+    Returns:
+        The final newsletter as a string.
+    """
+    import os
+    import logging
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+
+    TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
+    if not TAVILY_API_KEY:
+        error_msg = "TAVILY_API_KEY environment variable is not set."
+        logging.error(error_msg)
+        return error_msg
+
+    tavily_tool = TavilySearchTool(
+        api_key=TAVILY_API_KEY,
+        search_depth=search_depth,
+        max_result=max_results,
+        include_answer=include_answer,
+        include_images=include_images,
+        timeout=timeout,
+    )
+
+    if not query:
+        if topic == "AI":
+            query = (
+                "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
+                "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
+                "Focus on sources like NIST, MLCommons, arXiv, Hacker News, security mailing lists, and relevant industry reports."
+            )
+        else:  # PQC
+            query = (
+                "Latest post-quantum cryptography (PQC) news, research, vulnerabilities, benchmarks, and tools. "
+                "Include topics on PQC algorithms, standardization efforts, security analysis, implementation challenges, and academic research. "
+                "Focus on sources like NIST PQC Project, IBM Research Blog, Cloudflare Blog (Crypto), Google Security Blog, arXiv (cryptography)."
+            )
+
+    # Format prompts with the topic
+    global RESEARCH_PROMPT, ANALYSIS_PROMPT, NEWSLETTER_PROMPT, EDITOR_PROMPT
+    RESEARCH_PROMPT = (
+        "You will receive a JSON list of news items. For each, extract the title, url, summary, and source. "
+        "If the list is empty, say 'No news found.'\n"
+        "JSON: {tool_output}\n"
+        "Summarize the 5 most important items in markdown bullet points, including citations and source URLs."
+    )
+    ANALYSIS_PROMPT = (
+        f"Analyze the following {topic} security news research summary. Identify the most significant developments and trends, "
+        f"explain their implications for {topic} security and related fields, provide a concise executive summary, and categorize "
+        "them into the following categories: LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, Academic Research.\n"
+        "{research_summary}"
+    )
+    NEWSLETTER_PROMPT = (
+        f"Write a professional, engaging {topic} security newsletter based on the following analysis. "
+        "Include a catchy intro, organize the main stories with summaries, categories, citations, and links, highlight trends, and end with a closing remark. "
+        "Format in markdown for readability:\n"
+        "{analysis}"
+    )
+    EDITOR_PROMPT = (
+        f"Edit the following {topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
+        "Ensure it is ready for publication:\n"
+        "{newsletter}"
+    )
+
+    try:
+        graph = build_graph(tavily_tool)
+        result = graph.invoke({"query": query})
+        newsletter = result.get("final_newsletter", "")
+        if hasattr(newsletter, "content"):
+            return newsletter.content
+        else:
+            return newsletter
+    except Exception as e:
+        error_msg = f"Error during newsletter generation: {e}"
+        logging.error(error_msg)
+        return error_msg
+
+
 if __name__ == "__main__":
     main()
