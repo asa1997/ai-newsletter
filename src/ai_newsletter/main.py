@@ -359,7 +359,7 @@ def main() -> None:
             query = (
                 "Latest post-quantum cryptography (PQC) news, research, vulnerabilities, benchmarks, and tools. "
                 "Include topics on PQC algorithms, standardization efforts, security analysis, implementation challenges, and academic research. "
-                "Focus on sources like NIST, academic papers, cryptography mailing lists, and relevant industry reports."
+                "Focus on sources like NIST PQC Project, IBM Research Blog, Cloudflare Blog (Crypto), Google Security Blog, arXiv (cryptography)."
             )
 
     logging.info("Starting AI newsletter generation workflow.")
