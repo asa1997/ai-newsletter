@@ -81,27 +81,28 @@ llm = ChatOllama(
 
 # Prompt templates as constants for easier maintenance
 RESEARCH_PROMPT = (
-    "You will receive a JSON list of news items. For each, extract the title, url, and summary. "
+    "You will receive a JSON list of news items. For each, extract the title, url, summary, and source. "
     "If the list is empty, say 'No news found.'\n"
     "JSON: {tool_output}\n"
-    "Summarize the 5 most important items in markdown bullet points."
+    "Summarize the 5 most important items in markdown bullet points, including citations and source URLs."
 )
 
 ANALYSIS_PROMPT = (
-    "Analyze the following AI/ML news research summary. Identify the most significant developments and trends, "
-    "explain their implications for different industries, and provide a concise executive summary:\n"
+    "Analyze the following {topic} security news research summary. Identify the most significant developments and trends, "
+    "explain their implications for {topic} security and related fields, provide a concise executive summary, and categorize "
+    "them into the following categories: LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, Academic Research.\n"
     "{research_summary}"
 )
 
 NEWSLETTER_PROMPT = (
-    "Write a professional, engaging AI/ML newsletter based on the following analysis. "
-    "Include a catchy intro, organize the main stories with summaries and links, highlight trends, and end with a closing remark. "
+    "Write a professional, engaging {topic} security newsletter based on the following analysis. "
+    "Include a catchy intro, organize the main stories with summaries, categories, citations, and links, highlight trends, and end with a closing remark. "
     "Format in markdown for readability:\n"
     "{analysis}"
 )
 
 EDITOR_PROMPT = (
-    "Edit the following AI/ML newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
+    "Edit the following {topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
     "Ensure it is ready for publication:\n"
     "{newsletter}"
 )
@@ -147,7 +148,7 @@ def newsletter_writer_agent(input_dict: Dict[str, Any]) -> str:
         input_dict: Dictionary with key 'analysis' (str).
 
     Returns:
-        A markdown formatted newsletter.
+        A markdown formatted newsletter or JSON structured output for dashboard integration.
     """
     analysis = input_dict["analysis"]
     prompt = NEWSLETTER_PROMPT.format(analysis=analysis)
@@ -278,6 +279,13 @@ def parse_args() -> argparse.Namespace:
         help="Custom query string for the newsletter research step.",
     )
     parser.add_argument(
+        "--topic",
+        type=str,
+        choices=["AI", "PQC"],
+        default="AI",
+        help="Topic to query for: AI or PQC (Post-Quantum Cryptography). Default is AI.",
+    )
+    parser.add_argument(
         "--search-depth",
         type=str,
         default=os.getenv("TAVILY_SEARCH_DEPTH", "advanced"),
@@ -338,16 +346,51 @@ def main() -> None:
         timeout=args.timeout,
     )
 
-    # Default query including specified sources, updated to fetch news of the current week
-    default_query = (
-    "Latest AI and machine learning news this week: breakthroughs, funding, regulation, new models, industry trends. "
-    "Focus on OpenAI, Google, Microsoft, NVIDIA, Anthropic, Meta, arXiv, NIST, MLCommons, Alignment Newsletter, Hacker News."
-    )
-
-    query = args.query if args.query else default_query
+    if args.query:
+        query = args.query
+    else:
+        if args.topic == "AI":
+            query = (
+                "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
+                "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
+                "Focus on sources like NIST, MLCommons, arXiv, Hacker News, security mailing lists, and relevant industry reports."
+            )
+        else:  # PQC
+            query = (
+                "Latest post-quantum cryptography (PQC) news, research, vulnerabilities, benchmarks, and tools. "
+                "Include topics on PQC algorithms, standardization efforts, security analysis, implementation challenges, and academic research. "
+                "Focus on sources like NIST, academic papers, cryptography mailing lists, and relevant industry reports."
+            )
 
     logging.info("Starting AI newsletter generation workflow.")
     logging.info(f"Using query: {query}")
+    logging.info(f"Topic selected: {args.topic}")
+
+    # Format prompts with the topic
+    global RESEARCH_PROMPT, ANALYSIS_PROMPT, NEWSLETTER_PROMPT, EDITOR_PROMPT
+    RESEARCH_PROMPT = (
+        "You will receive a JSON list of news items. For each, extract the title, url, summary, and source. "
+        "If the list is empty, say 'No news found.'\n"
+        "JSON: {tool_output}\n"
+        "Summarize the 5 most important items in markdown bullet points, including citations and source URLs."
+    )
+    ANALYSIS_PROMPT = (
+        f"Analyze the following {args.topic} security news research summary. Identify the most significant developments and trends, "
+        f"explain their implications for {args.topic} security and related fields, provide a concise executive summary, and categorize "
+        "them into the following categories: LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, Academic Research.\n"
+        "{research_summary}"
+    )
+    NEWSLETTER_PROMPT = (
+        f"Write a professional, engaging {args.topic} security newsletter based on the following analysis. "
+        "Include a catchy intro, organize the main stories with summaries, categories, citations, and links, highlight trends, and end with a closing remark. "
+        "Format in markdown for readability:\n"
+        "{analysis}"
+    )
+    EDITOR_PROMPT = (
+        f"Edit the following {args.topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
+        "Ensure it is ready for publication:\n"
+        "{newsletter}"
+    )
 
     try:
         graph = build_graph(tavily_tool)
@@ -361,6 +404,58 @@ def main() -> None:
             print(newsletter)
     except Exception as e:
         logging.error(f"Error during newsletter generation: {e}")
+
+
+
+# def main() -> None:
+#     """
+#     Main entry point for the AI newsletter generator.
+#     """
+#     args = parse_args()
+
+#     logging.basicConfig(
+#         level=logging.DEBUG if args.verbose else logging.INFO,
+#         format="%(asctime)s - %(levelname)s - %(message)s",
+#     )
+
+#     TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
+#     if not TAVILY_API_KEY:
+#         logging.error("TAVILY_API_KEY environment variable is not set.")
+#         return
+
+#     tavily_tool = TavilySearchTool(
+#         api_key=TAVILY_API_KEY,
+#         search_depth=args.search_depth,
+#         max_result=args.max_results,
+#         include_answer=args.include_answer,
+#         include_images=args.include_images,
+#         timeout=args.timeout,
+#     )
+
+#     # Updated default query to focus on AI security news, vulnerabilities, benchmarks, tools, PQC, and related topics
+#     default_query = (
+#         "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
+#         "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
+#         "Focus on sources like NIST, MLCommons, arXiv, Hacker News, security mailing lists, OWASP, MITRE (ATLAS/ATT&CK), AI Snake Oil, Alignment Newsletter, Security & Safety Substacks, Ben Dickson, HuggingFace SafetAI  and relevant industry reports."
+#     )
+
+#     query = args.query if args.query else default_query
+
+#     logging.info("Starting AI newsletter generation workflow.")
+#     logging.info(f"Using query: {query}")
+
+#     try:
+#         graph = build_graph(tavily_tool)
+#         result = graph.invoke({"query": query})
+#         newsletter = result.get("final_newsletter", "")
+
+#         logging.info("\n\n===== FINAL NEWSLETTER =====\n")
+#         if hasattr(newsletter, "content"):
+#             print(newsletter.content)
+#         else:
+#             print(newsletter)
+#     except Exception as e:
+#         logging.error(f"Error during newsletter generation: {e}")
 
 
 if __name__ == "__main__":
