@@ -407,57 +407,6 @@ def main() -> None:
 
 
 
-# def main() -> None:
-#     """
-#     Main entry point for the AI newsletter generator.
-#     """
-#     args = parse_args()
-
-#     logging.basicConfig(
-#         level=logging.DEBUG if args.verbose else logging.INFO,
-#         format="%(asctime)s - %(levelname)s - %(message)s",
-#     )
-
-#     TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
-#     if not TAVILY_API_KEY:
-#         logging.error("TAVILY_API_KEY environment variable is not set.")
-#         return
-
-#     tavily_tool = TavilySearchTool(
-#         api_key=TAVILY_API_KEY,
-#         search_depth=args.search_depth,
-#         max_result=args.max_results,
-#         include_answer=args.include_answer,
-#         include_images=args.include_images,
-#         timeout=args.timeout,
-#     )
-
-#     # Updated default query to focus on AI security news, vulnerabilities, benchmarks, tools, PQC, and related topics
-#     default_query = (
-#         "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
-#         "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
-#         "Focus on sources like NIST, MLCommons, arXiv, Hacker News, security mailing lists, OWASP, MITRE (ATLAS/ATT&CK), AI Snake Oil, Alignment Newsletter, Security & Safety Substacks, Ben Dickson, HuggingFace SafetAI  and relevant industry reports."
-#     )
-
-#     query = args.query if args.query else default_query
-
-#     logging.info("Starting AI newsletter generation workflow.")
-#     logging.info(f"Using query: {query}")
-
-#     try:
-#         graph = build_graph(tavily_tool)
-#         result = graph.invoke({"query": query})
-#         newsletter = result.get("final_newsletter", "")
-
-#         logging.info("\n\n===== FINAL NEWSLETTER =====\n")
-#         if hasattr(newsletter, "content"):
-#             print(newsletter.content)
-#         else:
-#             print(newsletter)
-#     except Exception as e:
-#         logging.error(f"Error during newsletter generation: {e}")
-
-
 def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced", max_results: int = 10, include_answer: bool = True, include_images: bool = False, timeout: int = 60) -> str:
     """
     Function to be called externally (e.g., by promptfoo) to invoke the newsletter generation workflow.
@@ -552,4 +501,11 @@ def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "call_api":
+        # quick CLI for promptfoo
+        import json
+        params = json.loads(sys.stdin.read())
+        print(call_api(**params))
+    else:
+        main()
