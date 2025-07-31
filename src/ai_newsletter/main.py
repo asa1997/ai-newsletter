@@ -512,6 +512,7 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "call_api":
         query = sys.argv[2] if len(sys.argv) > 2 else ""
+        print("###################Query received:", query)
         call_api(query)
     else:
         main()
