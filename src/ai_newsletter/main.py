@@ -511,9 +511,7 @@ def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "call_api":
-        sys.argv.pop(1)  # Remove 'call_api' so argparse doesn't see it
-        import json
-        params = json.loads(sys.stdin.read())
-        print(call_api(**params))
+        query = sys.argv[2] if len(sys.argv) > 2 else ""
+        call_api(query)
     else:
         main()
