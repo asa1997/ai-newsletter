@@ -426,6 +426,8 @@ def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced
     import os
     import logging
 
+    args = parse_args()
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
@@ -446,8 +448,10 @@ def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced
         timeout=timeout,
     )
 
-    if not query:
-        if topic == "AI":
+    if args.query:
+        query = args.query
+    else:
+        if args.topic == "AI":
             query = (
                 "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
                 "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
@@ -460,6 +464,10 @@ def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced
                 "Focus on sources like NIST PQC Project, IBM Research Blog, Cloudflare Blog (Crypto), Google Security Blog, arXiv (cryptography)."
             )
 
+    logging.info("Starting AI newsletter generation workflow.")
+    logging.info(f"Using query: {query}")
+    logging.info(f"Topic selected: {args.topic}")
+
     # Format prompts with the topic
     global RESEARCH_PROMPT, ANALYSIS_PROMPT, NEWSLETTER_PROMPT, EDITOR_PROMPT
     RESEARCH_PROMPT = (
@@ -469,19 +477,19 @@ def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced
         "Summarize the 5 most important items in markdown bullet points, including citations and source URLs."
     )
     ANALYSIS_PROMPT = (
-        f"Analyze the following {topic} security news research summary. Identify the most significant developments and trends, "
-        f"explain their implications for {topic} security and related fields, provide a concise executive summary, and categorize "
+        f"Analyze the following {args.topic} security news research summary. Identify the most significant developments and trends, "
+        f"explain their implications for {args.topic} security and related fields, provide a concise executive summary, and categorize "
         "them into the following categories: LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, Academic Research.\n"
         "{research_summary}"
     )
     NEWSLETTER_PROMPT = (
-        f"Write a professional, engaging {topic} security newsletter based on the following analysis. "
+        f"Write a professional, engaging {args.topic} security newsletter based on the following analysis. "
         "Include a catchy intro, organize the main stories with summaries, categories, citations, and links, highlight trends, and end with a closing remark. "
         "Format in markdown for readability:\n"
         "{analysis}"
     )
     EDITOR_PROMPT = (
-        f"Edit the following {topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
+        f"Edit the following {args.topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
         "Ensure it is ready for publication:\n"
         "{newsletter}"
     )
@@ -490,14 +498,14 @@ def call_api(query: str = None, topic: str = "AI", search_depth: str = "advanced
         graph = build_graph(tavily_tool)
         result = graph.invoke({"query": query})
         newsletter = result.get("final_newsletter", "")
+
+        logging.info("\n\n===== FINAL NEWSLETTER =====\n")
         if hasattr(newsletter, "content"):
-            return newsletter.content
+            print(newsletter.content)
         else:
-            return newsletter
+            print(newsletter)
     except Exception as e:
-        error_msg = f"Error during newsletter generation: {e}"
-        logging.error(error_msg)
-        return error_msg
+        logging.error(f"Error during newsletter generation: {e}")
 
 
 if __name__ == "__main__":
