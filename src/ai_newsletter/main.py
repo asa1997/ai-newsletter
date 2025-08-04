@@ -430,6 +430,7 @@ def call_api(
     # build your default query if none provided...
     if args.query:
         query = args.query
+        print(f"##############Using custom query: {query}")
     else:
         if args.topic == "AI":
             query = (
