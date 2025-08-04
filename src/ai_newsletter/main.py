@@ -3,7 +3,7 @@ import os
 import argparse
 import logging
 from typing import TypedDict, Optional, Dict, Any
-
+import asyncio
 from langchain.tools import BaseTool
 from tavily import TavilyClient
 from langchain_community.chat_models import ChatOllama
@@ -407,71 +407,103 @@ def main() -> None:
 
 
 
-def call_api(
+# def call_api(
 
-) -> str:
-    # DROP the `args = parse_args()` call!
-    # Use the function parameters directly.
-    args = parse_args()
+# ) -> str:
+#     # DROP the `args = parse_args()` call!
+#     # Use the function parameters directly.
+#     args = parse_args()
     
-    TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
-    if not TAVILY_API_KEY:
-        return "TAVILY_API_KEY environment variable is not set."
+#     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+#     if not TAVILY_API_KEY:
+#         return "TAVILY_API_KEY environment variable is not set."
 
-    tavily_tool = TavilySearchTool(
-        api_key=TAVILY_API_KEY,
-        search_depth=args.search_depth,
-        max_result=args.max_results,
-        include_answer=args.include_answer,
-        include_images=args.include_images,
-        timeout=args.timeout,
-    )
+#     tavily_tool = TavilySearchTool(
+#         api_key=TAVILY_API_KEY,
+#         search_depth=args.search_depth,
+#         max_result=args.max_results,
+#         include_answer=args.include_answer,
+#         include_images=args.include_images,
+#         timeout=args.timeout,
+#     )
 
-    # build your default query if none provided...
-    if args.query:
-        query = args.query
-        print(f"##############Using custom query: {query}")
-    else:
-        if args.topic == "AI":
-            query = (
-                "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
-                "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
-                "Focus on sources like NIST, MLCommons, arXiv, Hacker News, security mailing lists, and relevant industry reports."
-            )
-        else:  # PQC
-            query = (
-                "Latest post-quantum cryptography (PQC) news, research, vulnerabilities, benchmarks, and tools. "
-                "Include topics on PQC algorithms, standardization efforts, security analysis, implementation challenges, and academic research. "
-                "Focus on sources like NIST PQC Project, IBM Research Blog, Cloudflare Blog (Crypto), Google Security Blog, arXiv (cryptography)."
-            )
-    global RESEARCH_PROMPT, ANALYSIS_PROMPT, NEWSLETTER_PROMPT, EDITOR_PROMPT
-    RESEARCH_PROMPT = (
-        "You will receive a JSON list of news items. For each, extract the title, url, summary, and source. "
-        "If the list is empty, say 'No news found.'\n"
-        "JSON: {tool_output}\n"
-        "Summarize the 5 most important items in markdown bullet points, including citations and source URLs."
-    )
-    ANALYSIS_PROMPT = (
-        f"Analyze the following {args.topic} security news research summary. Identify the most significant developments and trends, "
-        f"explain their implications for {args.topic} security and related fields, provide a concise executive summary, and categorize "
-        "them into the following categories: LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, Academic Research.\n"
-        "{research_summary}"
-    )
-    NEWSLETTER_PROMPT = (
-        f"Write a professional, engaging {args.topic} security newsletter based on the following analysis. "
-        "Include a catchy intro, organize the main stories with summaries, categories, citations, and links, highlight trends, and end with a closing remark. "
-        "Format in markdown for readability:\n"
-        "{analysis}"
-    )
-    EDITOR_PROMPT = (
-        f"Edit the following {args.topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
-        "Ensure it is ready for publication:\n"
-        "{newsletter}"
-    )
-    graph = build_graph(tavily_tool)
-    result = graph.invoke({"query": query})
-    return result.get("final_newsletter", "")
+#     # build your default query if none provided...
+#     if args.query:
+#         query = args.query
+#         print(f"##############Using custom query: {query}")
+#     else:
+#         if args.topic == "AI":
+#             query = (
+#                 "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
+#                 "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
+#                 "Focus on sources like NIST, MLCommons, arXiv, Hacker News, security mailing lists, and relevant industry reports."
+#             )
+#         else:  # PQC
+#             query = (
+#                 "Latest post-quantum cryptography (PQC) news, research, vulnerabilities, benchmarks, and tools. "
+#                 "Include topics on PQC algorithms, standardization efforts, security analysis, implementation challenges, and academic research. "
+#                 "Focus on sources like NIST PQC Project, IBM Research Blog, Cloudflare Blog (Crypto), Google Security Blog, arXiv (cryptography)."
+#             )
+#     global RESEARCH_PROMPT, ANALYSIS_PROMPT, NEWSLETTER_PROMPT, EDITOR_PROMPT
+#     RESEARCH_PROMPT = (
+#         "You will receive a JSON list of news items. For each, extract the title, url, summary, and source. "
+#         "If the list is empty, say 'No news found.'\n"
+#         "JSON: {tool_output}\n"
+#         "Summarize the 5 most important items in markdown bullet points, including citations and source URLs."
+#     )
+#     ANALYSIS_PROMPT = (
+#         f"Analyze the following {args.topic} security news research summary. Identify the most significant developments and trends, "
+#         f"explain their implications for {args.topic} security and related fields, provide a concise executive summary, and categorize "
+#         "them into the following categories: LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, Academic Research.\n"
+#         "{research_summary}"
+#     )
+#     NEWSLETTER_PROMPT = (
+#         f"Write a professional, engaging {args.topic} security newsletter based on the following analysis. "
+#         "Include a catchy intro, organize the main stories with summaries, categories, citations, and links, highlight trends, and end with a closing remark. "
+#         "Format in markdown for readability:\n"
+#         "{analysis}"
+#     )
+#     EDITOR_PROMPT = (
+#         f"Edit the following {args.topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
+#         "Ensure it is ready for publication:\n"
+#         "{newsletter}"
+#     )
+#     graph = build_graph(tavily_tool)
+#     result = graph.invoke({"query": query})
+#     return result.get("final_newsletter", "")
 
+def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Calls the CrewAI recruitment agent with the provided prompt.
+    Wraps the async function in a synchronous call for Promptfoo.
+    """
+    try:
+        # ✅ Run the async recruitment agent synchronously
+        config = options.get("config", {})
+        model = config.get("model", "openai:gpt-4.1")
+        result = asyncio.run(main)
+
+        print(result)
+        # if "error" in result:
+        #     return {"error": result["error"], "raw": result.get("raw_output", "")}
+        # return {"output": result}
+
+    except Exception as e:
+        # 🔥 Catch and return any error as part of the output
+        return {"error": f"An error occurred in call_api: {str(e)}"}
+
+# if __name__ == "__main__":
+#     # 🧪 Simple test block to check provider behavior standalone
+#     print("✅ Testing CrewAI provider...")
+
+#     # 🔧 Example test prompt
+#     # test_prompt = "We need a Ruby on Rails and React engineer with at least 5 years of experience."
+
+#     # ⚡ Call the API function with test inputs
+#     result = call_api('', {}, {})
+
+#     # 📦 Print the result to console
+#     # print("Provider result:", json.dumps(result, indent=2))
 
 if __name__ == "__main__":
     import sys
