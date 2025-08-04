@@ -408,32 +408,30 @@ def main() -> None:
 
 
 def call_api(
-    query: str = None,
-    topic: str = "AI",
-    search_depth: str = "advanced",
-    max_results: int = 10,
-    include_answer: bool = True,
-    include_images: bool = False,
-    timeout: int = 60,
+
 ) -> str:
     # DROP the `args = parse_args()` call!
     # Use the function parameters directly.
+    args = parse_args()
+    
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
     if not TAVILY_API_KEY:
         return "TAVILY_API_KEY environment variable is not set."
 
     tavily_tool = TavilySearchTool(
         api_key=TAVILY_API_KEY,
-        search_depth=search_depth,
-        max_result=max_results,
-        include_answer=include_answer,
-        include_images=include_images,
-        timeout=timeout,
+        search_depth=args.search_depth,
+        max_result=args.max_results,
+        include_answer=args.include_answer,
+        include_images=args.include_images,
+        timeout=args.timeout,
     )
 
     # build your default query if none provided...
-    if not query:
-        if topic == "AI":
+    if args.query:
+        query = args.query
+    else:
+        if args.topic == "AI":
             query = (
                 "Latest AI security news, vulnerabilities, benchmarks, and tools related to AI security, security for AI, and post-quantum cryptography (PQC). "
                 "Include topics on LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, and Academic Research. "
@@ -453,19 +451,19 @@ def call_api(
         "Summarize the 5 most important items in markdown bullet points, including citations and source URLs."
     )
     ANALYSIS_PROMPT = (
-        f"Analyze the following {topic} security news research summary. Identify the most significant developments and trends, "
-        f"explain their implications for {topic} security and related fields, provide a concise executive summary, and categorize "
+        f"Analyze the following {args.topic} security news research summary. Identify the most significant developments and trends, "
+        f"explain their implications for {args.topic} security and related fields, provide a concise executive summary, and categorize "
         "them into the following categories: LLM Security, Agentic Threats, Vulnerability Disclosure, Security Tools, Academic Research.\n"
         "{research_summary}"
     )
     NEWSLETTER_PROMPT = (
-        f"Write a professional, engaging {topic} security newsletter based on the following analysis. "
+        f"Write a professional, engaging {args.topic} security newsletter based on the following analysis. "
         "Include a catchy intro, organize the main stories with summaries, categories, citations, and links, highlight trends, and end with a closing remark. "
         "Format in markdown for readability:\n"
         "{analysis}"
     )
     EDITOR_PROMPT = (
-        f"Edit the following {topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
+        f"Edit the following {args.topic} security newsletter draft for clarity, accuracy, professionalism, and markdown formatting. "
         "Ensure it is ready for publication:\n"
         "{newsletter}"
     )
@@ -478,7 +476,7 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "call_api":
         # consume everything after “call_api” as the raw prompt
-        raw = " ".join(sys.argv[2:])
-        print(call_api(query=raw))
+        # raw = " ".join(sys.argv[2:])
+        print(call_api)
     else:
         main()
