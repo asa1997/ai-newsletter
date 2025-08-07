@@ -26,7 +26,7 @@ def ollama_agent(state):
     # Update history
     history = state.get("history", []).copy()
     history.append({'role': 'user', 'content': prompt})
-    history.append({'role': 'ai', 'content': response.output})
+    history.append({'role': 'ai', 'content': response})
     return {"history": history}
 
 # Build the graph
