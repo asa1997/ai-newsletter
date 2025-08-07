@@ -399,9 +399,11 @@ def main() -> None:
 
         logging.info("\n\n===== FINAL NEWSLETTER =====\n")
         if hasattr(newsletter, "content"):
-            print(newsletter.content)
+            # print(newsletter.content)
+            return newsletter.content
         else:
-            print(newsletter)
+            # print(newsletter)
+            return newsletter
     except Exception as e:
         logging.error(f"Error during newsletter generation: {e}")
 
@@ -481,7 +483,7 @@ def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> D
         # ✅ Run the async recruitment agent synchronously
         config = options.get("config", {})
         model = config.get("model", "openai:gpt-4.1")
-        result = asyncio.run(main)
+        result = main()
 
         print(result)
         # if "error" in result:
@@ -512,4 +514,6 @@ if __name__ == "__main__":
         # raw = " ".join(sys.argv[2:])
         print(call_api)
     else:
-        main()
+        result = main()
+
+        print(result)
