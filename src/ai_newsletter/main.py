@@ -481,7 +481,7 @@ def main(query: str = "", topic: str = "AI") -> None:
 #     result = graph.invoke({"query": query})
 #     return result.get("final_newsletter", "")
 
-def call_api(prompt: str) -> Dict[str, Any]:
+def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calls the CrewAI recruitment agent with the provided prompt.
     Wraps the async function in a synchronous call for Promptfoo.
@@ -520,7 +520,7 @@ if __name__ == "__main__":
         # consume everything after “call_api” as the raw prompt
         # raw = " ".join(sys.argv[2:])
     test_query = "Latest news on AI"
-    print(call_api(prompt=test_query))
+    print(call_api(test_query, {}, {}))
     # else:
     #     result = main()
 
