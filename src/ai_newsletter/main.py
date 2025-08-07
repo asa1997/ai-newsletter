@@ -486,6 +486,10 @@ def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> D
     Calls the CrewAI recruitment agent with the provided prompt.
     Wraps the async function in a synchronous call for Promptfoo.
     """
+    print("######################################")
+    print("TESTING CALL API")
+    print("######################################")
+
     try:
         # ✅ Run the async recruitment agent synchronously
         # config = options.get("config", {})
