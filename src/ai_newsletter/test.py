@@ -17,7 +17,7 @@ class ConversationState:
         self.history = history or []
 
 def ollama_agent(state: ConversationState):
-    llm = Ollama(model="llama3")  # or any model you have in Ollama
+    llm = Ollama(model="llama3.2:latest")  # or any model you have in Ollama
     messages = []
     for msg in state.history:
         if msg['role'] == 'user':
