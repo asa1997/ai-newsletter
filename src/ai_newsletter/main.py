@@ -482,7 +482,7 @@ def main(query: str = "", topic: str = "AI") -> None:
 #     result = graph.invoke({"query": query})
 #     return result.get("final_newsletter", "")
 
-def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+def call_api(query: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calls the CrewAI recruitment agent with the provided prompt.
     Wraps the async function in a synchronous call for Promptfoo.
@@ -495,7 +495,7 @@ def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> D
         # ✅ Run the async recruitment agent synchronously
         # config = options.get("config", {})
         # model = config.get("model", "openai:gpt-4.1")
-        result = main(query=prompt)
+        result = main(query)
 
         # print(result)
         if "error" in result:
