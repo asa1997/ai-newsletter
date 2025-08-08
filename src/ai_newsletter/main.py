@@ -5,7 +5,7 @@ import logging
 from typing import TypedDict, Optional, Dict, Any
 import asyncio
 from langchain.tools import BaseTool
-from SearchTool import TavilyClient
+from tavily import TavilyClient
 from langchain_community.chat_models import ChatOllama
 from langgraph.graph import StateGraph, END
 import smtplib

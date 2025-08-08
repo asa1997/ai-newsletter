@@ -1,5 +1,5 @@
 from langchain.tools import BaseTool
-from ai_newsletter.SearchTool import TavilyClient
+from tavily import TavilyClient
 from pydantic import PrivateAttr
 import logging
 import json
