@@ -324,7 +324,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main(query: str = "", topic: str = "AI") -> None:
+def trigger(query: str = "", topic: str = "AI") -> None:
     """
     Main entry point for the AI newsletter generator.
     """
