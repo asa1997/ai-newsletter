@@ -11,7 +11,8 @@ from langgraph.graph import StateGraph, END
 from pydantic import PrivateAttr
 import smtplib
 from email.message import EmailMessage
-
+import warnings
+warnings.filterwarnings("ignore")
 
 class NewsletterState(TypedDict):
     query: str
