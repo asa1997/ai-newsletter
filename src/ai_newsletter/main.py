@@ -496,10 +496,10 @@ def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> D
         # model = config.get("model", "openai:gpt-4.1")
         result = main(query=prompt)
 
-        print(result)
-        # if "error" in result:
-        #     return {"error": result["error"], "raw": result.get("raw_output", "")}
-        # return {"output": result}
+        # print(result)
+        if "error" in result:
+            return {"error": result["error"], "raw": result.get("raw_output", "")}
+        return {"output": result}
 
     except Exception as e:
         # 🔥 Catch and return any error as part of the output
