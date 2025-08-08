@@ -3,7 +3,7 @@ import os
 from SearchTool import TavilySearchTool
 from MakeGraph import build_graph
 
-def trigger(query: str = "", topic: str = "AI") -> None:
+def trigger(query: str = "", topic: str = "AI") -> str:
     """
     Main entry point for the AI newsletter generator.
     """
