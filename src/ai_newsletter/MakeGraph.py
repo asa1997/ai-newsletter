@@ -2,6 +2,8 @@ from langgraph.graph import StateGraph, END
 from typing import TypedDict, Optional, Dict, Any
 from SearchTool import TavilySearchTool
 from langchain_community.chat_models import ChatOllama
+import warnings
+warnings.filterwarnings("ignore")
 
 class NewsletterState(TypedDict):
     query: str
