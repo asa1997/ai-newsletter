@@ -1,4 +1,4 @@
-from main import trigger
+from pipeline import trigger
 from typing import TypedDict, Optional, Dict, Any
 
 def call_api(query: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
