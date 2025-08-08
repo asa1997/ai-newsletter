@@ -1,7 +1,8 @@
 import logging
 import os
 from SearchTool import TavilySearchTool
-from main import build_graph
+from MakeGraph import build_graph
+
 def trigger(query: str = "", topic: str = "AI") -> None:
     """
     Main entry point for the AI newsletter generator.
