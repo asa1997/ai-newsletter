@@ -1,7 +1,7 @@
 from pipeline import trigger
 from typing import TypedDict, Optional, Dict, Any
 
-def call_api(query: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calls the CrewAI recruitment agent with the provided prompt.
     Wraps the async function in a synchronous call for Promptfoo.
@@ -14,7 +14,7 @@ def call_api(query: str, options: Dict[str, Any], context: Dict[str, Any]) -> Di
         # ✅ Run the async recruitment agent synchronously
         # config = options.get("config", {})
         # model = config.get("model", "openai:gpt-4.1")
-        result = trigger(query)
+        result = trigger(prompt)
 
         # print(result)
         if "error" in result:
