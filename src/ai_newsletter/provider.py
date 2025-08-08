@@ -1,4 +1,4 @@
-import main
+from main import main
 from typing import TypedDict, Optional, Dict, Any
 
 def call_api(query: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
