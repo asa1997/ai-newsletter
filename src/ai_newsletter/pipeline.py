@@ -2,8 +2,10 @@ import logging
 import os
 from SearchTool import TavilySearchTool
 from MakeGraph import build_graph
+from typing import TypedDict, Optional, Dict, Any
 
-def trigger(query: str = "", topic: str = "AI") -> str:
+
+def trigger(query: str = "", topic: str = "AI") -> Dict[str, Any]:
     """
     Main entry point for the AI newsletter generator.
     """
