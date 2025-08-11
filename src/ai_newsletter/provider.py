@@ -14,7 +14,7 @@ def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> D
         # ✅ Run the async recruitment agent synchronously
         # config = options.get("config", {})
         # model = config.get("model", "openai:gpt-4.1")
-        result = trigger(prompt, '')
+        result = trigger(prompt, 'AI')
 
         # print(result)
         if "error" in result:
