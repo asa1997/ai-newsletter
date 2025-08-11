@@ -90,11 +90,10 @@ def trigger(query: str = "", topic: str = "AI") -> Dict[str, Any]:
 
         logging.info("\n\n===== FINAL NEWSLETTER =====\n")
         if hasattr(newsletter, "content"):
-            # print(newsletter.content)
-            return newsletter.content
+            return {"newsletter": newsletter.content}
         else:
-            # print(newsletter)
-            return newsletter
+            return {"newsletter": newsletter}
     except Exception as e:
         logging.error(f"Error during newsletter generation: {e}")
+        return {"error": f"Error during newsletter generation: {e}"}
 
