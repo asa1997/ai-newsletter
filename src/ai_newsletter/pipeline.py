@@ -85,7 +85,7 @@ def trigger(query: str = "", topic: str = "AI") -> Dict[str, Any]:
 
     try:
         graph = build_graph(tavily_tool)
-        result = graph.invoke({"query": query})
+        result = graph.invoke({"query": query, "topic": topic})
         newsletter = result.get("final_newsletter", "")
 
         logging.info("\n\n===== FINAL NEWSLETTER =====\n")

@@ -7,6 +7,7 @@ warnings.filterwarnings("ignore")
 
 class NewsletterState(TypedDict):
     query: str
+    topic: str
     research_summary: Optional[str]
     analysis: Optional[str]
     newsletter: Optional[str]
@@ -74,7 +75,8 @@ def analysis_agent(input_dict: Dict[str, Any]) -> str:
         An executive summary of the analysis.
     """
     research_summary = input_dict["research_summary"]
-    prompt = ANALYSIS_PROMPT.format(research_summary=research_summary)
+    topic = input_dict["topic"]
+    prompt = ANALYSIS_PROMPT.format(research_summary=research_summary, topic=topic)
     return llm.invoke(prompt)
 
 
@@ -89,7 +91,8 @@ def newsletter_writer_agent(input_dict: Dict[str, Any]) -> str:
         A markdown formatted newsletter or JSON structured output for dashboard integration.
     """
     analysis = input_dict["analysis"]
-    prompt = NEWSLETTER_PROMPT.format(analysis=analysis)
+    topic = input_dict["topic"]
+    prompt = NEWSLETTER_PROMPT.format(analysis=analysis, topic=topic)
     return llm.invoke(prompt)
 
 
@@ -104,7 +107,8 @@ def editor_agent(input_dict: Dict[str, Any]) -> str:
         The final edited newsletter.
     """
     newsletter = input_dict["newsletter"]
-    prompt = EDITOR_PROMPT.format(newsletter=newsletter)
+    topic = input_dict["topic"]
+    prompt = EDITOR_PROMPT.format(newsletter=newsletter, topic=topic)
     return llm.invoke(prompt)
 
 def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
@@ -120,28 +124,34 @@ def build_graph(tavily_tool: TavilySearchTool) -> StateGraph:
     workflow = StateGraph(NewsletterState)
 
     workflow.add_node(
-        "research_agent",
-        lambda state: {
-            "research_summary": research_agent(
-                {"query": state["query"], "tavily_tool": tavily_tool}
-            )
-        },
+    "research_agent",
+    lambda state: {
+        "research_summary": research_agent(
+            {"query": state["query"], "tavily_tool": tavily_tool}
+        ),
+        "topic": state["topic"],  # Pass topic along in the state
+    },
     )
     workflow.add_node(
         "analysis_agent",
         lambda state: {
-            "analysis": analysis_agent({"research_summary": state["research_summary"]})
+            "analysis": analysis_agent({"research_summary": state["research_summary"], "topic": state["topic"]}),
+            "topic": state["topic"],
         },
     )
     workflow.add_node(
         "newsletter_agent",
         lambda state: {
-            "newsletter": newsletter_writer_agent({"analysis": state["analysis"]})
+            "newsletter": newsletter_writer_agent({"analysis": state["analysis"], "topic": state["topic"]}),
+            "topic": state["topic"],
         },
     )
     workflow.add_node(
         "editor_agent",
-        lambda state: {"final_newsletter": editor_agent({"newsletter": state["newsletter"]})},
+        lambda state: {
+            "final_newsletter": editor_agent({"newsletter": state["newsletter"], "topic": state["topic"]}),
+            "topic": state["topic"],
+        },
     )
     # workflow.add_node(
     #     "send_email",
