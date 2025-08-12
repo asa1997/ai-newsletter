@@ -46,12 +46,12 @@ plugins:
     - id: harmful:cybercrime  # Tests handling of cybercrime-related content
     - id: harmful:copyright-violations  # Tests handling of intellectual property violations
     - id: harmful:privacy  # Tests handling of privacy violation attempts
-  strategies:
+strategies:
     - id: goat  # Dynamic multi-turn attack generation using adversarial techniques
       config:
         stateful: true
     - id: jailbreak  # Single-shot optimization of safety bypass techniques
-  numTests: 10
+numTests: 10
 defaultTest:
   vars: {}
   options:
