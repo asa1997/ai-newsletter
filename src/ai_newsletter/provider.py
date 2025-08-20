@@ -1,5 +1,15 @@
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Dict, Any
 from pipeline import trigger
-from typing import TypedDict, Optional, Dict, Any
+
+app = FastAPI()
+
+class CallApiRequest(BaseModel):
+    prompt: str
+    options: Dict[str, Any] = {}
+    context: Dict[str, Any] = {}
 
 def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -12,15 +22,20 @@ def call_api(prompt: str, options: Dict[str, Any], context: Dict[str, Any]) -> D
 
     try:
         # ✅ Run the async recruitment agent synchronously
-        # config = options.get("config", {})
-        # model = config.get("model", "openai:gpt-4.1")
         result = trigger(prompt, 'AI')
-
-        # print(result)
         if "error" in result:
             return {"error": result["error"], "raw": result.get("raw_output", "")}
         return {"output": result}
-
     except Exception as e:
-        # 🔥 Catch and return any error as part of the output
         return {"error": f"An error occurred in call_api: {str(e)}"}
+
+
+# FastAPI endpoint
+@app.post("/call_api")
+async def call_api_endpoint(request: CallApiRequest):
+    result = call_api(
+        prompt=request.prompt,
+        options=request.options,
+        context=request.context
+    )
+    return result
